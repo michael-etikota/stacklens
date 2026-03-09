@@ -264,3 +264,45 @@
     last-updated: (var-get last-params-update)
   }
 )
+
+;; Get cycle-specific yield estimate
+(define-read-only (get-cycle-yield-estimate (cycle uint))
+  (default-to 
+    (var-get historical-avg-yield-bps)
+    (get yield-bps (map-get? cycle-yield-estimates { cycle: cycle }))
+  )
+)
+
+;; Calculate required STX for target BTC reward
+(define-read-only (calculate-required-stx (target-btc-sats uint) (lock-cycles uint))
+  (let (
+      (total-stacked (var-get total-stacked-ustx))
+      (avg-btc (var-get avg-btc-per-cycle-sats))
+      ;; Required share = (target / (avg * cycles)) * 10000
+      (required-share-bps (if (and (> avg-btc u0) (> lock-cycles u0))
+                              (/ (* target-btc-sats BPS_DENOMINATOR) (* avg-btc lock-cycles))
+                              u0))
+      ;; Required STX = share * total / 10000
+      (required-stx (if (> required-share-bps u0)
+                        (/ (* total-stacked required-share-bps) BPS_DENOMINATOR)
+                        u0))
+    )
+    {
+      target-btc-sats: target-btc-sats,
+      lock-cycles: lock-cycles,
+      required-stx-ustx: required-stx,
+      required-stx: (/ required-stx USTX_PER_STX),
+      required-share-bps: required-share-bps
+    }
+  )
+)
+
+;; Contract info
+(define-read-only (get-contract-info)
+  {
+    owner: CONTRACT_OWNER,
+    min-lock-cycles: MIN_LOCK_CYCLES,
+    max-lock-cycles: MAX_LOCK_CYCLES,
+    last-params-update: (var-get last-params-update)
+  }
+)
