@@ -149,3 +149,41 @@
     })
   )
 )
+
+;; ============================================================================
+;; READ-ONLY FUNCTIONS
+;; ============================================================================
+
+;; Core simulation function - estimate BTC rewards
+(define-read-only (simulate-rewards (stx-amount uint) (lock-cycles uint))
+  (let (
+      (total-stacked (var-get total-stacked-ustx))
+      (avg-btc (var-get avg-btc-per-cycle-sats))
+      (yield-bps (var-get historical-avg-yield-bps))
+      ;; Calculate user's share of the pool
+      (user-share-bps (if (> total-stacked u0)
+                          (/ (* stx-amount BPS_DENOMINATOR) total-stacked)
+                          u0))
+      ;; Estimate BTC rewards per cycle based on share
+      (btc-per-cycle (if (> total-stacked u0)
+                         (/ (* avg-btc user-share-bps) BPS_DENOMINATOR)
+                         u0))
+      ;; Total estimated BTC over lock period
+      (total-btc-estimate (* btc-per-cycle lock-cycles))
+    )
+    {
+      stx-amount: stx-amount,
+      lock-cycles: lock-cycles,
+      user-share-bps: user-share-bps,
+      btc-per-cycle-sats: btc-per-cycle,
+      estimated-btc-sats: total-btc-estimate,
+      yield-bps: yield-bps,
+      annualized-yield-bps: (* yield-bps u26), ;; ~26 cycles per year
+      network-params: {
+        total-stacked: total-stacked,
+        avg-btc-per-cycle: avg-btc,
+        stacking-threshold: (var-get current-stacking-threshold)
+      }
+    }
+  )
+)
