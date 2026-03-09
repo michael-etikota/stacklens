@@ -12,7 +12,7 @@ import { NETWORK_CONFIG, type NetworkId } from './constants';
 export interface WalletAddress {
   address: string;
   publicKey: string;
-  symbol: string;
+  symbol?: string;
 }
 
 export interface ConnectResult {
