@@ -115,3 +115,37 @@
     (ok true)
   )
 )
+
+;; Run a simulation and store the result
+(define-public (run-simulation (stx-amount uint) (lock-cycles uint))
+  (let (
+      (user tx-sender)
+      (current-count (default-to u0 (get count (map-get? user-simulation-count { user: user }))))
+      (new-id (+ current-count u1))
+      (simulation-result (simulate-rewards stx-amount lock-cycles))
+    )
+    ;; Validate inputs
+    (asserts! (> stx-amount u0) ERR_INVALID_AMOUNT)
+    (asserts! (and (>= lock-cycles MIN_LOCK_CYCLES) (<= lock-cycles MAX_LOCK_CYCLES)) ERR_INVALID_CYCLES)
+    
+    ;; Store the simulation
+    (map-set user-simulations
+      { user: user, simulation-id: new-id }
+      {
+        stx-amount: stx-amount,
+        lock-cycles: lock-cycles,
+        estimated-btc-sats: (get estimated-btc-sats simulation-result),
+        estimated-yield-bps: (get yield-bps simulation-result),
+        created-at: stacks-block-height
+      }
+    )
+    
+    ;; Update user's simulation count
+    (map-set user-simulation-count { user: user } { count: new-id })
+    
+    (ok {
+      simulation-id: new-id,
+      result: simulation-result
+    })
+  )
+)
