@@ -97,3 +97,49 @@
 (define-private (can-submit-data)
   (or (is-contract-owner) (is-authorized-provider tx-sender))
 )
+
+;; ============================================================================
+;; PUBLIC FUNCTIONS
+;; ============================================================================
+
+;; Record a yield snapshot for a reward cycle
+(define-public (record-yield-snapshot 
+    (cycle uint)
+    (total-stacked uint)
+    (total-btc-rewards uint)
+    (avg-yield-bps uint)
+    (num-stackers uint)
+    (snapshot-block uint))
+  (begin
+    ;; Authorization check
+    (asserts! (can-submit-data) ERR_UNAUTHORIZED)
+    ;; Validate cycle is positive
+    (asserts! (> cycle u0) ERR_INVALID_CYCLE)
+    ;; Check snapshot doesn't already exist
+    (asserts! (is-none (map-get? yield-snapshots { cycle: cycle })) ERR_SNAPSHOT_EXISTS)
+    
+    ;; Store the snapshot
+    (map-set yield-snapshots
+      { cycle: cycle }
+      {
+        total-stacked: total-stacked,
+        total-btc-rewards: total-btc-rewards,
+        avg-yield-bps: avg-yield-bps,
+        num-stackers: num-stackers,
+        snapshot-block: snapshot-block,
+        timestamp: stacks-block-height
+      }
+    )
+    
+    ;; Update latest cycle if needed
+    (if (> cycle (var-get latest-snapshot-cycle))
+      (var-set latest-snapshot-cycle cycle)
+      true
+    )
+    
+    ;; Increment total snapshots
+    (var-set total-snapshots (+ (var-get total-snapshots) u1))
+    
+    (ok cycle)
+  )
+)
