@@ -97,3 +97,21 @@
     (ok true)
   )
 )
+
+;; Update historical average yield
+(define-public (update-avg-yield (yield-bps uint))
+  (begin
+    (asserts! (is-contract-owner) ERR_UNAUTHORIZED)
+    (var-set historical-avg-yield-bps yield-bps)
+    (ok yield-bps)
+  )
+)
+
+;; Set yield estimate for a specific cycle
+(define-public (set-cycle-yield-estimate (cycle uint) (yield-bps uint))
+  (begin
+    (asserts! (is-contract-owner) ERR_UNAUTHORIZED)
+    (map-set cycle-yield-estimates { cycle: cycle } { yield-bps: yield-bps })
+    (ok true)
+  )
+)
