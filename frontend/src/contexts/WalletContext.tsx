@@ -1,5 +1,11 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
-import { MOCK_WALLET_ADDRESS } from "@/data/mock-data";
+import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+import {
+  connectWallet,
+  disconnectWallet,
+  checkIsConnected,
+  type ConnectResult,
+} from "@/lib/stacks";
+import { useNetwork } from "@/contexts/NetworkContext";
 
 type WalletType = "hiro" | "xverse" | "leather";
 
@@ -19,6 +25,7 @@ interface WalletContextType extends WalletState {
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
+  const { network } = useNetwork();
   const [state, setState] = useState<WalletState>({
     isConnected: false,
     address: null,
@@ -26,19 +33,41 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     isConnecting: false,
   });
 
+  // Check if already connected on mount
+  useEffect(() => {
+    if (checkIsConnected()) {
+      // Already connected from previous session – reconnect silently
+      connectWallet(network)
+        .then((result: ConnectResult) => {
+          setState({
+            isConnected: true,
+            address: result.stxAddress,
+            walletType: null,
+            isConnecting: false,
+          });
+        })
+        .catch(() => { /* silent fail on auto-reconnect */ });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const connect = useCallback(async (walletType: WalletType) => {
     setState((s) => ({ ...s, isConnecting: true }));
-    // Simulate connection delay
-    await new Promise((r) => setTimeout(r, 1200));
-    setState({
-      isConnected: true,
-      address: MOCK_WALLET_ADDRESS,
-      walletType,
-      isConnecting: false,
-    });
-  }, []);
+    try {
+      const result = await connectWallet(network);
+      setState({
+        isConnected: true,
+        address: result.stxAddress,
+        walletType,
+        isConnecting: false,
+      });
+    } catch {
+      setState((s) => ({ ...s, isConnecting: false }));
+      throw new Error("Wallet connection failed or was cancelled");
+    }
+  }, [network]);
 
   const disconnect = useCallback(() => {
+    disconnectWallet();
     setState({
       isConnected: false,
       address: null,
