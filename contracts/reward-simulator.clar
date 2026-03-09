@@ -42,3 +42,31 @@
 
 ;; Historical average yields (in basis points per cycle)
 (define-data-var historical-avg-yield-bps uint u50) ;; 0.5% per cycle default
+
+;; ============================================================================
+;; DATA MAPS
+;; ============================================================================
+
+;; Store simulation results for users
+(define-map user-simulations
+  { user: principal, simulation-id: uint }
+  {
+    stx-amount: uint,
+    lock-cycles: uint,
+    estimated-btc-sats: uint,
+    estimated-yield-bps: uint,
+    created-at: uint
+  }
+)
+
+;; User simulation counter
+(define-map user-simulation-count
+  { user: principal }
+  { count: uint }
+)
+
+;; Cycle-specific yield estimates (if available)
+(define-map cycle-yield-estimates
+  { cycle: uint }
+  { yield-bps: uint }
+)
