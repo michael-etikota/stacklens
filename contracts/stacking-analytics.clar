@@ -143,3 +143,75 @@
     (ok cycle)
   )
 )
+
+;; Register a new delegation pool
+(define-public (register-pool
+    (pool-address principal)
+    (name (string-ascii 64))
+    (fee-bps uint)
+    (min-delegation uint))
+  (begin
+    (asserts! (can-submit-data) ERR_UNAUTHORIZED)
+    (asserts! (<= fee-bps u10000) ERR_INVALID_AMOUNT) ;; Max 100% fee
+    
+    (map-set delegation-pools
+      { pool-address: pool-address }
+      {
+        name: name,
+        fee-bps: fee-bps,
+        min-delegation: min-delegation,
+        total-delegated: u0,
+        delegator-count: u0,
+        is-active: true,
+        last-updated: stacks-block-height
+      }
+    )
+    
+    (ok pool-address)
+  )
+)
+
+;; Update pool statistics
+(define-public (update-pool-stats
+    (pool-address principal)
+    (total-delegated uint)
+    (delegator-count uint))
+  (let ((pool-data (unwrap! (map-get? delegation-pools { pool-address: pool-address }) ERR_INVALID_POOL)))
+    (asserts! (can-submit-data) ERR_UNAUTHORIZED)
+    
+    (map-set delegation-pools
+      { pool-address: pool-address }
+      (merge pool-data {
+        total-delegated: total-delegated,
+        delegator-count: delegator-count,
+        last-updated: stacks-block-height
+      })
+    )
+    
+    (ok true)
+  )
+)
+
+;; Record pool cycle performance
+(define-public (record-pool-cycle-stats
+    (pool-address principal)
+    (cycle uint)
+    (stacked-amount uint)
+    (btc-rewards uint)
+    (yield-bps uint))
+  (begin
+    (asserts! (can-submit-data) ERR_UNAUTHORIZED)
+    (asserts! (is-some (map-get? delegation-pools { pool-address: pool-address })) ERR_INVALID_POOL)
+    
+    (map-set pool-cycle-stats
+      { pool-address: pool-address, cycle: cycle }
+      {
+        stacked-amount: stacked-amount,
+        btc-rewards: btc-rewards,
+        yield-bps: yield-bps
+      }
+    )
+    
+    (ok true)
+  )
+)
