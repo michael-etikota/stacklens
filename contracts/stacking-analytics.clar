@@ -215,3 +215,74 @@
     (ok true)
   )
 )
+
+;; Add an authorized data provider
+(define-public (add-provider (provider principal))
+  (begin
+    (asserts! (is-contract-owner) ERR_UNAUTHORIZED)
+    (map-set authorized-providers { provider: provider } { is-authorized: true })
+    (ok provider)
+  )
+)
+
+;; Remove an authorized data provider
+(define-public (remove-provider (provider principal))
+  (begin
+    (asserts! (is-contract-owner) ERR_UNAUTHORIZED)
+    (map-set authorized-providers { provider: provider } { is-authorized: false })
+    (ok provider)
+  )
+)
+
+;; ============================================================================
+;; READ-ONLY FUNCTIONS
+;; ============================================================================
+
+;; Get yield snapshot for a specific cycle
+(define-read-only (get-yield-snapshot (cycle uint))
+  (map-get? yield-snapshots { cycle: cycle })
+)
+
+;; Get the latest recorded snapshot cycle
+(define-read-only (get-latest-snapshot-cycle)
+  (var-get latest-snapshot-cycle)
+)
+
+;; Get total number of snapshots
+(define-read-only (get-total-snapshots)
+  (var-get total-snapshots)
+)
+
+;; Get delegation pool info
+(define-read-only (get-pool-info (pool-address principal))
+  (map-get? delegation-pools { pool-address: pool-address })
+)
+
+;; Get pool cycle statistics
+(define-read-only (get-pool-cycle-stats (pool-address principal) (cycle uint))
+  (map-get? pool-cycle-stats { pool-address: pool-address, cycle: cycle })
+)
+
+;; Check if an address is an authorized provider
+(define-read-only (is-provider-authorized (provider principal))
+  (is-authorized-provider provider)
+)
+
+;; Calculate estimated APY from yield basis points
+;; Assumes ~26 cycles per year (2 weeks per cycle)
+(define-read-only (calculate-annual-yield (yield-bps uint))
+  (let ((cycles-per-year u26))
+    ;; Compound yield: ((1 + r)^26 - 1) approximated as r * 26 for simplicity
+    (* yield-bps cycles-per-year)
+  )
+)
+
+;; Get contract info
+(define-read-only (get-contract-info)
+  {
+    owner: CONTRACT_OWNER,
+    latest-cycle: (var-get latest-snapshot-cycle),
+    total-snapshots: (var-get total-snapshots),
+    is-paused: (var-get is-paused)
+  }
+)
