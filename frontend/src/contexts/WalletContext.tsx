@@ -1,17 +1,21 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
-import { MOCK_WALLET_ADDRESS } from "@/data/mock-data";
-
-type WalletType = "hiro" | "xverse" | "leather";
+import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+import {
+  connectWallet,
+  disconnectWallet,
+  checkIsConnected,
+  type ConnectResult,
+} from "@/lib/stacks";
+import { getLocalStorage } from "@stacks/connect";
+import { useNetwork } from "@/contexts/NetworkContext";
 
 interface WalletState {
   isConnected: boolean;
   address: string | null;
-  walletType: WalletType | null;
   isConnecting: boolean;
 }
 
 interface WalletContextType extends WalletState {
-  connect: (walletType: WalletType) => Promise<void>;
+  connect: () => Promise<void>;
   disconnect: () => void;
   truncatedAddress: string | null;
 }
@@ -19,30 +23,50 @@ interface WalletContextType extends WalletState {
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
+  const { network } = useNetwork();
   const [state, setState] = useState<WalletState>({
     isConnected: false,
     address: null,
-    walletType: null,
     isConnecting: false,
   });
 
-  const connect = useCallback(async (walletType: WalletType) => {
+  // Restore session silently from local storage (no popup)
+  useEffect(() => {
+    if (checkIsConnected()) {
+      const stored = getLocalStorage();
+      if (stored) {
+        const stxEntry = stored.addresses.stx?.[0];
+        if (stxEntry?.address) {
+          setState({
+            isConnected: true,
+            address: stxEntry.address,
+            isConnecting: false,
+          });
+        }
+      }
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const connect = useCallback(async () => {
     setState((s) => ({ ...s, isConnecting: true }));
-    // Simulate connection delay
-    await new Promise((r) => setTimeout(r, 1200));
-    setState({
-      isConnected: true,
-      address: MOCK_WALLET_ADDRESS,
-      walletType,
-      isConnecting: false,
-    });
-  }, []);
+    try {
+      const result = await connectWallet(network);
+      setState({
+        isConnected: true,
+        address: result.stxAddress,
+        isConnecting: false,
+      });
+    } catch {
+      setState((s) => ({ ...s, isConnecting: false }));
+      throw new Error("Wallet connection failed or was cancelled");
+    }
+  }, [network]);
 
   const disconnect = useCallback(() => {
+    disconnectWallet();
     setState({
       isConnected: false,
       address: null,
-      walletType: null,
       isConnecting: false,
     });
   }, []);

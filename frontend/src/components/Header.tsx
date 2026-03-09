@@ -7,7 +7,7 @@ import { Logo } from "@/components/Logo";
 import { useWallet } from "@/contexts/WalletContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useNetwork } from "@/contexts/NetworkContext";
-import { WalletModal } from "@/components/WalletModal";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,10 +34,9 @@ const navLinks = [
 ];
 
 export function Header({ hideDeskNav = false }: { hideDeskNav?: boolean }) {
-  const { isConnected, truncatedAddress, disconnect } = useWallet();
+  const { isConnected, truncatedAddress, disconnect, connect } = useWallet();
   const { theme, toggleTheme } = useTheme();
   const { network } = useNetwork();
-  const [walletModalOpen, setWalletModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [disconnectOpen, setDisconnectOpen] = useState(false);
   const location = useLocation();
@@ -116,7 +115,7 @@ export function Header({ hideDeskNav = false }: { hideDeskNav?: boolean }) {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button size="sm" onClick={() => setWalletModalOpen(true)} className="gap-2 glow-primary">
+              <Button size="sm" onClick={() => connect()} className="gap-2 glow-primary">
                 <Wallet className="h-4 w-4" />
                 <span className="hidden sm:inline">Connect Wallet</span>
               </Button>
@@ -156,8 +155,6 @@ export function Header({ hideDeskNav = false }: { hideDeskNav?: boolean }) {
           </div>
         )}
       </header>
-
-      <WalletModal open={walletModalOpen} onOpenChange={setWalletModalOpen} />
 
       {/* Disconnect confirmation */}
       <AlertDialog open={disconnectOpen} onOpenChange={setDisconnectOpen}>

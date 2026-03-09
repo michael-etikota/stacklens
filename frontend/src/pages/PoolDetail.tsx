@@ -12,13 +12,12 @@ import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger }
 import { mockPools } from "@/data/mock-data";
 import { toast } from "sonner";
 import { useWallet } from "@/contexts/WalletContext";
-import { WalletModal } from "@/components/WalletModal";
+
 
 export default function PoolDetailPage() {
   const { id } = useParams<{ id: string }>();
   const pool = mockPools.find((p) => p.id === id);
-  const { isConnected, truncatedAddress } = useWallet();
-  const [walletModalOpen, setWalletModalOpen] = useState(false);
+  const { isConnected, truncatedAddress, connect } = useWallet();
   const [showDelegationConfirm, setShowDelegationConfirm] = useState(false);
 
   if (!pool) {
@@ -212,7 +211,7 @@ export default function PoolDetailPage() {
               <TooltipTrigger asChild>
                 <span className="w-full">
                   {!isConnected ? (
-                    <Button className="w-full gap-2" size="lg" onClick={() => setWalletModalOpen(true)} disabled={pool.status !== "active"}>
+                    <Button className="w-full gap-2" size="lg" onClick={() => connect()} disabled={pool.status !== "active"}>
                       <LogIn className="h-4 w-4" /> Connect Wallet to Delegate
                     </Button>
                   ) : (
@@ -230,7 +229,6 @@ export default function PoolDetailPage() {
             </UITooltip>
           </TooltipProvider>
 
-          <WalletModal open={walletModalOpen} onOpenChange={setWalletModalOpen} />
         </div>
       </PageTransition>
     </AppLayout>

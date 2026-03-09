@@ -17,6 +17,7 @@ import { HeroRewardDisplay } from "@/components/simulator/HeroRewardDisplay";
 import { SavedScenariosDrawer, type SavedScenario } from "@/components/simulator/SavedScenariosDrawer";
 import { OverlaySelector } from "@/components/simulator/OverlaySelector";
 import { BreakevenAnalysis } from "@/components/simulator/BreakevenAnalysis";
+import { useSimulation } from "@/hooks/use-simulator";
 
 const fadeUp = { initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 } };
 
@@ -55,8 +56,14 @@ export default function SimulatorPage() {
 
   const pool = mockPools.find((p) => p.id === selectedPool) ?? mockPools[0];
 
-  const soloResult = useMemo(() => calculateRewards(stxAmount, lockCycles, "solo"), [stxAmount, lockCycles]);
-  const poolResult = useMemo(() => calculateRewards(stxAmount, lockCycles, "pool", pool.fee), [stxAmount, lockCycles, pool.fee]);
+  // Live simulation from backend, with local fallback while loading
+  const { data: soloResult } = useSimulation(stxAmount, lockCycles, "solo");
+  const { data: poolResult, isLive } = useSimulation(
+    stxAmount,
+    lockCycles,
+    "pool",
+    pool.fee * 100, // pool.fee is %, backend expects bps
+  );
   const activeResult = isPool ? poolResult : soloResult;
 
   // Compute overlay projections

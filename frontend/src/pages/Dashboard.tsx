@@ -30,7 +30,7 @@ import {
   useCycleProgress,
   useRecentActivity,
 } from "@/hooks/use-stacking-data";
-import { WalletModal } from "@/components/WalletModal";
+
 
 const fadeUp = { initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 } };
 
@@ -209,21 +209,18 @@ function NotStackingYet() {
 }
 
 function NotConnectedState() {
-  const [modalOpen, setModalOpen] = useState(false);
+  const { connect } = useWallet();
   return (
-    <>
-      <div className="flex flex-col items-center justify-center py-24 text-center">
-        <NotConnectedIllustration className="mb-6" />
-        <h2 className="text-2xl font-bold mb-3 font-display">Connect Your Wallet</h2>
-        <p className="text-muted-foreground mb-6 max-w-md">
-          Connect your Stacks wallet to view your stacking analytics, rewards, and positions.
-        </p>
-        <Button size="lg" onClick={() => setModalOpen(true)} className="gap-2 glow-primary">
-          <Wallet className="h-4 w-4" /> Connect Wallet
-        </Button>
-      </div>
-      <WalletModal open={modalOpen} onOpenChange={setModalOpen} />
-    </>
+    <div className="flex flex-col items-center justify-center py-24 text-center">
+      <NotConnectedIllustration className="mb-6" />
+      <h2 className="text-2xl font-bold mb-3 font-display">Connect Your Wallet</h2>
+      <p className="text-muted-foreground mb-6 max-w-md">
+        Connect your Stacks wallet to view your stacking analytics, rewards, and positions.
+      </p>
+      <Button size="lg" onClick={() => connect()} className="gap-2 glow-primary">
+        <Wallet className="h-4 w-4" /> Connect Wallet
+      </Button>
+    </div>
   );
 }
 
