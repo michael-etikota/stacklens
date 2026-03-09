@@ -248,3 +248,19 @@
 (define-read-only (get-user-simulation (user principal) (simulation-id uint))
   (map-get? user-simulations { user: user, simulation-id: simulation-id })
 )
+
+;; Get user's total simulations
+(define-read-only (get-user-simulation-count (user principal))
+  (default-to u0 (get count (map-get? user-simulation-count { user: user })))
+)
+
+;; Get current network parameters
+(define-read-only (get-network-params)
+  {
+    stacking-threshold: (var-get current-stacking-threshold),
+    total-stacked: (var-get total-stacked-ustx),
+    avg-btc-per-cycle: (var-get avg-btc-per-cycle-sats),
+    historical-yield-bps: (var-get historical-avg-yield-bps),
+    last-updated: (var-get last-params-update)
+  }
+)
