@@ -51,3 +51,49 @@
     timestamp: uint                ;; Stacks block height when recorded
   }
 )
+
+;; Registered delegation pools
+(define-map delegation-pools
+  { pool-address: principal }
+  {
+    name: (string-ascii 64),
+    fee-bps: uint,                 ;; Pool fee in basis points
+    min-delegation: uint,          ;; Minimum delegation amount (uSTX)
+    total-delegated: uint,         ;; Total STX delegated to pool
+    delegator-count: uint,         ;; Number of delegators
+    is-active: bool,
+    last-updated: uint
+  }
+)
+
+;; Historical pool performance per cycle
+(define-map pool-cycle-stats
+  { pool-address: principal, cycle: uint }
+  {
+    stacked-amount: uint,
+    btc-rewards: uint,
+    yield-bps: uint
+  }
+)
+
+;; Authorized data providers (can submit snapshots)
+(define-map authorized-providers
+  { provider: principal }
+  { is-authorized: bool }
+)
+
+;; ============================================================================
+;; AUTHORIZATION HELPERS
+;; ============================================================================
+
+(define-private (is-contract-owner)
+  (is-eq tx-sender CONTRACT_OWNER)
+)
+
+(define-private (is-authorized-provider (provider principal))
+  (default-to false (get is-authorized (map-get? authorized-providers { provider: provider })))
+)
+
+(define-private (can-submit-data)
+  (or (is-contract-owner) (is-authorized-provider tx-sender))
+)
