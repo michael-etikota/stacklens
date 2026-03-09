@@ -216,3 +216,35 @@
     }
   )
 )
+
+;; Compare solo stacking vs pool delegation
+(define-read-only (compare-stacking-options (stx-amount uint) (lock-cycles uint) (pool-fee-bps uint))
+  (let (
+      (threshold (var-get current-stacking-threshold))
+      (base-result (simulate-rewards stx-amount lock-cycles))
+      (pool-result (estimate-with-pool-fee stx-amount lock-cycles pool-fee-bps))
+      (meets-threshold (>= stx-amount threshold))
+    )
+    {
+      meets-solo-threshold: meets-threshold,
+      stacking-threshold: threshold,
+      solo-stacking: (if meets-threshold
+                        (some {
+                          estimated-btc-sats: (get estimated-btc-sats base-result),
+                          yield-bps: (get yield-bps base-result)
+                        })
+                        none),
+      pool-delegation: {
+        net-btc-sats: (get net-btc-sats pool-result),
+        fee-paid-sats: (get pool-fee-sats pool-result),
+        pool-fee-bps: pool-fee-bps
+      },
+      recommendation: (if meets-threshold "solo" "pool")
+    }
+  )
+)
+
+;; Get user's simulation history
+(define-read-only (get-user-simulation (user principal) (simulation-id uint))
+  (map-get? user-simulations { user: user, simulation-id: simulation-id })
+)
