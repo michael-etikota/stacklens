@@ -187,3 +187,32 @@
     }
   )
 )
+
+;; Quick estimate without storing
+(define-read-only (quick-estimate (stx-amount uint) (lock-cycles uint))
+  (let ((result (simulate-rewards stx-amount lock-cycles)))
+    {
+      estimated-btc-sats: (get estimated-btc-sats result),
+      estimated-btc: (/ (get estimated-btc-sats result) SATS_PER_BTC),
+      annualized-yield-bps: (get annualized-yield-bps result)
+    }
+  )
+)
+
+;; Estimate rewards with custom pool fee
+(define-read-only (estimate-with-pool-fee (stx-amount uint) (lock-cycles uint) (pool-fee-bps uint))
+  (let (
+      (base-result (simulate-rewards stx-amount lock-cycles))
+      (base-btc (get estimated-btc-sats base-result))
+      ;; Deduct pool fee
+      (fee-amount (/ (* base-btc pool-fee-bps) BPS_DENOMINATOR))
+      (net-btc (- base-btc fee-amount))
+    )
+    {
+      gross-btc-sats: base-btc,
+      pool-fee-sats: fee-amount,
+      net-btc-sats: net-btc,
+      pool-fee-bps: pool-fee-bps
+    }
+  )
+)
