@@ -1,0 +1,29 @@
+{
+  "name": "@stacklens/backend",
+  "version": "1.0.0",
+  "description": "StackLens Stacking Analytics API",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": ["stacks", "stacking", "analytics", "bitcoin", "defi"],
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "@hono/node-server": "^1.19.9",
+    "@stacks/network": "^7.3.1",
+    "@stacks/transactions": "^7.3.1",
+    "hono": "^4.12.3",
+    "node-cache": "^5.1.2",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.3",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
