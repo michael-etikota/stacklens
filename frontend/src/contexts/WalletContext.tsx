@@ -5,19 +5,17 @@ import {
   checkIsConnected,
   type ConnectResult,
 } from "@/lib/stacks";
+import { getLocalStorage } from "@stacks/connect";
 import { useNetwork } from "@/contexts/NetworkContext";
-
-type WalletType = "hiro" | "xverse" | "leather";
 
 interface WalletState {
   isConnected: boolean;
   address: string | null;
-  walletType: WalletType | null;
   isConnecting: boolean;
 }
 
 interface WalletContextType extends WalletState {
-  connect: (walletType: WalletType) => Promise<void>;
+  connect: () => Promise<void>;
   disconnect: () => void;
   truncatedAddress: string | null;
 }
@@ -29,35 +27,33 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<WalletState>({
     isConnected: false,
     address: null,
-    walletType: null,
     isConnecting: false,
   });
 
-  // Check if already connected on mount
+  // Restore session silently from local storage (no popup)
   useEffect(() => {
     if (checkIsConnected()) {
-      // Already connected from previous session – reconnect silently
-      connectWallet(network)
-        .then((result: ConnectResult) => {
+      const stored = getLocalStorage();
+      if (stored) {
+        const stxEntry = stored.addresses.stx?.[0];
+        if (stxEntry?.address) {
           setState({
             isConnected: true,
-            address: result.stxAddress,
-            walletType: null,
+            address: stxEntry.address,
             isConnecting: false,
           });
-        })
-        .catch(() => { /* silent fail on auto-reconnect */ });
+        }
+      }
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const connect = useCallback(async (walletType: WalletType) => {
+  const connect = useCallback(async () => {
     setState((s) => ({ ...s, isConnecting: true }));
     try {
       const result = await connectWallet(network);
       setState({
         isConnected: true,
         address: result.stxAddress,
-        walletType,
         isConnecting: false,
       });
     } catch {
@@ -71,7 +67,6 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     setState({
       isConnected: false,
       address: null,
-      walletType: null,
       isConnecting: false,
     });
   }, []);

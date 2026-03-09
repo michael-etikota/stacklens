@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 import { useTransactionHistory } from "@/hooks/use-stacking-data";
 import { PageTransition } from "@/components/PageTransition";
 import { useWallet } from "@/contexts/WalletContext";
-import { WalletModal } from "@/components/WalletModal";
+
 import { Wallet } from "lucide-react";
 import { MobileTransactionCard } from "@/components/history/MobileTransactionCard";
 import { NotConnectedIllustration } from "@/components/dashboard/EmptyStateIllustration";
@@ -39,7 +39,7 @@ const typeColors: Record<string, string> = {
 };
 
 function HistoryNotConnected() {
-  const [modalOpen, setModalOpen] = useState(false);
+  const { connect } = useWallet();
   return (
     <AppLayout>
       <div className="flex flex-col items-center justify-center py-24 text-center">
@@ -48,11 +48,10 @@ function HistoryNotConnected() {
         <p className="text-muted-foreground mb-6 max-w-md">
           Connect your Stacks wallet to view your stacking history and reward transactions.
         </p>
-        <Button size="lg" onClick={() => setModalOpen(true)} className="gap-2 glow-primary">
+        <Button size="lg" onClick={() => connect()} className="gap-2 glow-primary">
           <Wallet className="h-4 w-4" /> Connect Wallet
         </Button>
       </div>
-      <WalletModal open={modalOpen} onOpenChange={setModalOpen} />
     </AppLayout>
   );
 }
