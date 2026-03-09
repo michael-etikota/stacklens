@@ -70,3 +70,30 @@
   { cycle: uint }
   { yield-bps: uint }
 )
+
+;; ============================================================================
+;; AUTHORIZATION HELPERS
+;; ============================================================================
+
+(define-private (is-contract-owner)
+  (is-eq tx-sender CONTRACT_OWNER)
+)
+
+;; ============================================================================
+;; PUBLIC FUNCTIONS
+;; ============================================================================
+
+;; Update network parameters (admin only)
+(define-public (update-network-params
+    (stacking-threshold uint)
+    (total-stacked uint)
+    (avg-btc-per-cycle uint))
+  (begin
+    (asserts! (is-contract-owner) ERR_UNAUTHORIZED)
+    (var-set current-stacking-threshold stacking-threshold)
+    (var-set total-stacked-ustx total-stacked)
+    (var-set avg-btc-per-cycle-sats avg-btc-per-cycle)
+    (var-set last-params-update stacks-block-height)
+    (ok true)
+  )
+)
